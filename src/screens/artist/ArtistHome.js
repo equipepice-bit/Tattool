@@ -38,7 +38,7 @@ export default function ArtistHome() {
             style={styles.profilePic} 
           />
           <View style={styles.headerInfo}>
-            <Text style={styles.artistName}>Ana Silva</Text>
+            <Text style={styles.artistName}>Débora</Text>
             <Text style={styles.artistRole}>Tatuadora Profissional</Text>
           </View>
           <View style={styles.statusBadge}>
@@ -74,21 +74,7 @@ export default function ArtistHome() {
         </View>
       </ScrollView>
 
-      {/* BARRA INFERIOR CONSERTADA */}
-      <View style={styles.bottomNavWrapper}>
-        <View style={styles.bottomNavPill}>
-          <TouchableOpacity 
-            style={styles.navItem} 
-            onPress={() => navigation.navigate('Home')}
-          >
-            <Ionicons name="home" size={30} color="#5D1010" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem}>
-            <MaterialCommunityIcons name="feather" size={32} color="#5D1010" />
-          </TouchableOpacity>
-        </View>
-      </View>
+    
     </View>
   );
 }
