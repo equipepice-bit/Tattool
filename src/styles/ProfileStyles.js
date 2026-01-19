@@ -1,0 +1,152 @@
+import { StyleSheet } from 'react-native';
+import { COLORS } from '../theme/colors';
+
+export const profileStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    height: 220,
+    width: '100%',
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1,
+  },
+  gradientHeader: {
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(139, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  profileInfoContainer: {
+    alignItems: 'center',
+    marginTop: -60,
+    zIndex: 2,
+  },
+  profileImageBorder: {
+    padding: 4,
+    backgroundColor: COLORS.white,
+    borderRadius: 75,
+    elevation: 5,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#CBB8EE',
+  },
+  locationContainer: {
+    alignSelf: 'flex-end',
+    marginRight: 40,
+    marginBottom: 10,
+    marginTop: -20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationText: {
+    color: '#666',
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  name: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#8B0000',
+    marginTop: 10,
+  },
+  handle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  socialIcons: {
+    flexDirection: 'row',
+    marginRight: 20,
+    gap: 15,
+  },
+  budgetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.purpleBtn,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+  },
+  budgetBtnText: {
+    color: COLORS.purpleBtn,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  tagsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  tagsLabel: {
+    color: '#8B0000',
+    fontSize: 14,
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  tagsText: {
+    color: '#444',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primaryText,
+    marginLeft: 20,
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  portfolioScroll: {
+    paddingLeft: 20,
+    marginBottom: 25,
+  },
+  portfolioImage: {
+    width: 180,
+    height: 180,
+    borderRadius: 20,
+    marginRight: 15,
+    backgroundColor: '#ccc',
+  },
+  flashScroll: {
+    paddingLeft: 20,
+    paddingBottom: 20,
+  },
+  flashImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 20,
+    marginRight: 15,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#EEE',
+    resizeMode: 'contain',
+  },
+});
