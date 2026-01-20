@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ScrollView, 
   StatusBar,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native';
 import { 
   Ionicons, 
@@ -14,129 +15,176 @@ import {
   MaterialIcons, 
   MaterialCommunityIcons 
 } from '@expo/vector-icons';
-import { Calendar } from 'react-native-calendars';
-import { useNavigation } from '@react-navigation/native';
-import { artistHomeStyles as styles } from '../../styles/ArtistHomeStyles';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// Imports Internos
+import { artistHomeStyles as styles } from '../../styles/ArtistHomeStyles';
 import { getUserData } from '../../utils/storage';
+import { useTheme } from '../../context/ThemeContext';
+
+// Configuração do Calendário para PT-BR
+LocaleConfig.locales['pt-br'] = {
+  monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+  monthNamesShort: ['Jan.','Fev.','Mar.','Abr.','Mai.','Jun.','Jul.','Ago.','Set.','Out.','Nov.','Dez.'],
+  dayNames: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
+  dayNamesShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+  today: 'Hoje'
+};
+LocaleConfig.defaultLocale = 'pt-br';
 
 export default function ArtistHome() {
   const navigation = useNavigation();
-  const [selected, setSelected] = useState('');
+  const { colors, isDark } = useTheme(); // Hook do Tema
+  
+  const [selectedDate, setSelectedDate] = useState('');
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dados de exemplo para agendamentos
+  // --- DADOS MOCKADOS (Exemplo) ---
   const agendamentos = [
-    { id: 1, nome: 'Carlos Souza', data: '18 Out - 14:00', estilo: 'Old School', img: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, nome: 'Marina Lima', data: '20 Out - 09:30', estilo: 'Fineline', img: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: 3, nome: 'Roberto Alves', data: '21 Out - 16:00', estilo: 'Tribal', img: 'https://randomuser.me/api/portraits/men/65.jpg' },
+    { id: 1, nome: 'Carlos Souza' },
+    { id: 2, nome: 'Marina Lima' },
+    { id: 3, nome: 'Roberto Alves' },
   ];
+  
+  const totalAgendamentos = agendamentos.length;
+  const mediaAvaliacoes = 4.8;
 
-  // Dados de exemplo para avaliações
-  const avaliacoes = [
-    { id: 1, nome: 'João Silva', rating: 5, data: '2 dias atrás', comentario: 'Excelente trabalho! Atencioso e detalhista.', img: 'https://randomuser.me/api/portraits/men/22.jpg' },
-    { id: 2, nome: 'Maria Santos', rating: 4, data: '1 semana atrás', comentario: 'Adorei o resultado final, superou minhas expectativas!', img: 'https://randomuser.me/api/portraits/women/33.jpg' },
-    { id: 3, nome: 'Pedro Costa', rating: 5, data: '3 semanas atrás', comentario: 'Profissional incrível! Recomendo para todos.', img: 'https://randomuser.me/api/portraits/men/55.jpg' },
-  ];
-
+  // --- CARREGAMENTO DE DADOS ---
   const loadUserData = async () => {
-    const userData = await getUserData();
-    if (userData) {
-      setUser(userData);
+    try {
+      const userData = await getUserData();
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar usuário", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadUserData();
+    }, [])
+  );
 
-  // Cálculo das estatísticas
-  const totalAgendamentos = agendamentos.length;
-  const mediaAvaliacoes = 4.8; // Pode calcular dinamicamente se tiver os dados
-
-  // Função para renderizar estrelas de avaliação
-  const renderStars = (rating) => {
+  // --- RENDER ---
+  if (loading) {
     return (
-      <View style={localStyles.starsContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <FontAwesome
-            key={star}
-            name={star <= rating ? "star" : "star-o"}
-            size={16}
-            color="#FFD700"
-            style={localStyles.starIcon}
-          />
-        ))}
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
-  };
+  }
 
   return (
-    <View style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9F7FF" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       
       <ScrollView 
-        style={styles.container} 
+        style={[styles.container, { backgroundColor: colors.background }]} 
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 }]} 
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADER */}
-        <View style={styles.header}>
+        {/* === HEADER DO PERFIL === */}
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => navigation.navigate('ArtistProfileView')}>
             <Image 
               source={{ uri: user?.foto || 'https://images.unsplash.com/photo-1594069811326-0be65746369c?q=80&w=200' }} 
-              style={styles.profilePic} 
+              style={[styles.profilePic, { borderColor: colors.primary, borderWidth: 1 }]} 
             />
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={{ flex: 1 }} 
+            style={{ flex: 1, paddingHorizontal: 10 }} 
             onPress={() => navigation.navigate('ArtistProfileView')}
           >
             <View style={styles.headerInfo}>
-              <Text style={styles.artistName}>{user?.name || 'Ana Silva'}</Text>
-              <Text style={styles.artistRole}>Tatuador(a) Profissional</Text>
+              <Text style={[styles.artistName, { color: colors.text }]}>
+                {user?.name || 'Artista'}
+              </Text>
+              <Text style={[styles.artistRole, { color: colors.subText }]}>
+                Tatuador(a) Profissional
+              </Text>
             </View>
           </TouchableOpacity>
           
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>Disponível</Text>
+          {/* Badge de Status */}
+          <View style={[
+            styles.statusBadge, 
+            { 
+              backgroundColor: isDark ? 'rgba(76, 175, 80, 0.2)' : '#E8F5E9',
+              borderColor: isDark ? '#4CAF50' : 'transparent',
+              borderWidth: isDark ? 1 : 0
+            }
+          ]}>
+            <Text style={[styles.statusText, { color: isDark ? '#81C784' : '#2E7D32' }]}>
+              Disponível
+            </Text>
           </View>
           
-          <TouchableOpacity onPress={() => navigation.navigate('ArtistSettings')}>
-            <Ionicons name="settings-outline" size={28} color="#4A148C" />
+          {/* Botão Configurações */}
+          <TouchableOpacity 
+            style={{ marginLeft: 15 }} 
+            onPress={() => navigation.navigate('ArtistSettings')}
+          >
+            <Ionicons name="settings-outline" size={26} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        {/* ESTATÍSTICAS - AGENDAMENTOS E AVALIAÇÃO MÉDIA */}
+        {/* === ESTATÍSTICAS === */}
         <View style={localStyles.statsContainer}>
-          {/* CARD DE AGENDAMENTOS */}
-          <View style={localStyles.statCard}>
+          {/* Card Agendamentos */}
+          <View style={[
+            localStyles.statCard, 
+            { backgroundColor: colors.cardBg, borderColor: colors.border }
+          ]}>
             <View style={localStyles.statIconContainer}>
-              <MaterialCommunityIcons name="calendar-clock" size={28} color="#4A148C" />
+              <MaterialCommunityIcons 
+                name="calendar-clock" 
+                size={28} 
+                color={isDark ? '#BB86FC' : '#4A148C'} 
+              />
             </View>
             <View style={localStyles.statContent}>
-              <Text style={localStyles.statNumber}>{totalAgendamentos.toString().padStart(2, '0')}</Text>
-              <Text style={localStyles.statLabel}>Agendamentos</Text>
+              <Text style={[localStyles.statNumber, { color: colors.text }]}>
+                {totalAgendamentos.toString().padStart(2, '0')}
+              </Text>
+              <Text style={[localStyles.statLabel, { color: colors.subText }]}>
+                Agendamentos
+              </Text>
             </View>
           </View>
 
-          {/* CARD DE AVALIAÇÃO MÉDIA */}
-          <View style={localStyles.statCard}>
+          {/* Card Avaliação */}
+          <View style={[
+            localStyles.statCard, 
+            { backgroundColor: colors.cardBg, borderColor: colors.border }
+          ]}>
             <View style={localStyles.statIconContainer}>
               <FontAwesome name="star" size={28} color="#FFD700" />
             </View>
             <View style={localStyles.statContent}>
-              <Text style={localStyles.statNumber}>{mediaAvaliacoes.toFixed(1)}</Text>
-              <Text style={localStyles.statLabel}>Avaliação Média</Text>
+              <Text style={[localStyles.statNumber, { color: colors.text }]}>
+                {mediaAvaliacoes.toFixed(1)}
+              </Text>
+              <Text style={[localStyles.statLabel, { color: colors.subText }]}>
+                Avaliação Média
+              </Text>
+              
+              {/* Estrelinhas */}
               <View style={localStyles.ratingStars}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <FontAwesome
                     key={star}
                     name="star"
-                    size={14}
+                    size={12}
                     color="#FFD700"
-                    style={{ marginHorizontal: 1 }}
+                    style={{ marginRight: 2 }}
                   />
                 ))}
               </View>
@@ -144,77 +192,84 @@ export default function ArtistHome() {
           </View>
         </View>
 
-        {/* SEÇÃO DE AGENDAMENTOS */}
-        
-
-        {/* CALENDÁRIO */}
-        <View style={styles.calendarCard}>
+        {/* === CALENDÁRIO === */}
+        <View style={[
+          styles.calendarCard, 
+          { 
+            backgroundColor: colors.cardBg, 
+            borderColor: colors.border,
+            borderWidth: 1,
+            marginTop: 10
+          }
+        ]}>
           <View style={localStyles.calendarHeader}>
-            <Text style={styles.selectDateLabel}>Calendário</Text>
-            <MaterialIcons name="edit" size={24} color="#333" />
+            <Text style={[styles.selectDateLabel, { color: colors.text }]}>
+              Sua Agenda
+            </Text>
+            <MaterialIcons name="event" size={24} color={colors.subText} />
           </View>
           
-          <Text style={localStyles.calendarDate}>Outubro 2024</Text>
-
           <Calendar
-            onDayPress={day => setSelected(day.dateString)}
+            onDayPress={day => setSelectedDate(day.dateString)}
             markedDates={{ 
-              [selected]: {
+              [selectedDate]: {
                 selected: true, 
-                selectedColor: '#5D1010',
+                selectedColor: colors.primary, // Cor vinho/roxo definida no tema
                 selectedTextColor: '#FFF'
               }
             }}
             theme={{ 
-              todayTextColor: '#4A148C', 
-              arrowColor: '#333', 
-              textDayFontWeight: 'bold',
+              // Cores adaptativas
               calendarBackground: 'transparent',
-              textSectionTitleColor: '#4A148C',
-              monthTextColor: '#4A148C',
-              dayTextColor: '#333',
-              textDisabledColor: '#999',
+              textSectionTitleColor: isDark ? '#BB86FC' : '#4A148C',
+              selectedDayBackgroundColor: '#BB86FC',
+              selectedDayTextColor: '#ffffff',
+              todayTextColor: '#ffffff',
+              dayTextColor: '#ceb9b9',
+              textDisabledColor: colors.border,
+              dotColor: colors.primary,
+              selectedDotColor: '#ffffff',
+              arrowColor: isDark ? '#FFF' : '#4A148C',
+              disabledArrowColor: '#d9e1e8',
+              monthTextColor: colors.text,
+              indicatorColor: colors.primary,
+              textDayFontWeight: '500',
+              textMonthFontWeight: 'bold',
+              textDayHeaderFontWeight: 'bold',
               textDayFontSize: 16,
               textMonthFontSize: 18,
-              textDayHeaderFontSize: 14,
-              'stylesheet.calendar.header': {
-                week: {
-                  marginTop: 5,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 10,
-                }
-              }
+              textDayHeaderFontSize: 13
             }}
           />
         </View>
+        
+        {/* Espaço extra no final já que não tem barra inferior */}
+        <View style={{ height: 30 }} />
 
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
+// Estilos locais apenas para layout (cores vêm do style inline)
 const localStyles = StyleSheet.create({
-  // ESTATÍSTICAS
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
     marginBottom: 20,
+    marginTop: 10,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
     marginHorizontal: 5,
-    borderWidth: 1.5,
-    borderColor: '#D1C4E9',
-    elevation: 3,
-    shadowColor: '#4A148C',
-    shadowOpacity: 0.1,
+    borderWidth: 1,
+    elevation: 2, // Sombra Android
+    shadowOpacity: 0.1, // Sombra iOS
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    shadowRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -225,144 +280,23 @@ const localStyles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#4A148C',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
     fontWeight: '500',
   },
   ratingStars: {
     flexDirection: 'row',
     marginTop: 4,
   },
-  
-  // SEÇÕES
-  section: {
-    marginBottom: 25,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4A148C',
-    flex: 1,
-  },
-  seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
-    color: '#4A148C',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  cardsContainer: {
-    paddingHorizontal: 15,
-  },
-  card: {
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 20,
-    marginBottom: 15,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderWidth: 1.5,
-    borderColor: '#D1C4E9',
-    elevation: 2,
-    shadowColor: '#4A148C',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-  },
-  img: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  nome: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4A148C',
-    marginBottom: 5,
-  },
-  info: {
-    color: '#666',
-    fontSize: 13,
-    marginBottom: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  comentario: {
-    color: '#555',
-    fontSize: 14,
-    marginTop: 5,
-    fontStyle: 'italic',
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    marginBottom: 5,
-  },
-  starIcon: {
-    marginRight: 2,
-  },
-  
-  // CALENDÁRIO
   calendarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  calendarDate: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4A148C',
     marginBottom: 15,
-    textAlign: 'center',
-  },
-  
-  // BOTÕES DE AÇÃO
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    marginTop: 20,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#4A148C',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    borderRadius: 15,
-    marginHorizontal: 5,
-  },
-  actionButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  secondaryButton: {
-    backgroundColor: '#F0EBFF',
-    borderWidth: 2,
-    borderColor: '#4A148C',
-  },
-  secondaryButtonText: {
-    color: '#4A148C',
-  },
+    paddingHorizontal: 5,
+  }
 });

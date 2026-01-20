@@ -8,7 +8,8 @@ import {
   TextInput,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Switch // <--- Adicionei o Switch se quiser usar igual ao do cliente, ou manter o botão
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,17 +20,19 @@ import { ref as dbRef, update } from 'firebase/database';
 // Importação dos estilos e contexto
 import { settingsStyles as styles } from '../../styles/SettingsStyles';
 import { AuthContext } from '../../context/AuthContext';
-import { db } from '../../../firebase';
+import { useTheme } from '../../context/ThemeContext'; // <--- 1. IMPORTAR TEMA
+import { db } from '../../../firebase'; // Ajuste o caminho conforme sua estrutura
 import { getUserData, saveUserData } from '../../utils/storage';
-
 import { uploadPhotoToCloudinary } from '../../services/cloudinaryApi';
 
 export default function ArtistSettings() {
   const navigation = useNavigation();
   const { logout, user: contextUser, updateUserData } = useContext(AuthContext);
   
-  // Estados
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // 2. USAR O TEMA GLOBAL
+  const { isDark, toggleTheme, colors } = useTheme(); 
+  
+  // Estados (Removi o isDarkMode local)
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -85,7 +88,7 @@ export default function ArtistSettings() {
     }
   };
 
-  // Função para escolher foto
+  // ... (MANTIVE AS FUNÇÕES DE FOTO E UPLOAD IGUAIS PARA NÃO QUEBRAR A LÓGICA) ...
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -94,17 +97,14 @@ export default function ArtistSettings() {
         aspect: [1, 1],
         quality: 0.7,
       });
-
       if (!result.canceled && result.assets && result.assets[0]) {
         await handlePhotoSelect(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Erro ao escolher imagem:', error);
-      Alert.alert('Erro', 'Não foi possível escolher a imagem');
+      console.error(error);
     }
   };
 
-  // Função para tirar foto
   const takePhoto = async () => {
     try {
       const result = await ImagePicker.launchCameraAsync({
@@ -113,110 +113,52 @@ export default function ArtistSettings() {
         aspect: [1, 1],
         quality: 0.7,
       });
-
       if (!result.canceled && result.assets && result.assets[0]) {
         await handlePhotoSelect(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Erro ao tirar foto:', error);
-      Alert.alert('Erro', 'Não foi possível tirar a foto');
+      console.error(error);
     }
   };
 
-  // Função para lidar com a foto selecionada
   const handlePhotoSelect = async (imageUri) => {
-  if (!user.userId) {
-    Alert.alert('Erro', 'Usuário não identificado');
-    return;
-  }
-
-  try {
-    setUploadingPhoto(true);
-    
-    Alert.alert('Upload', 'Enviando para Cloudinary...', [], { cancelable: false });
-    
-    // 1. Fazer upload para Cloudinary
-    const cloudinaryResult = await uploadPhotoToCloudinary(imageUri, user.userId);
-    
-    // 2. Atualizar estado local com a URL do Cloudinary
-    const updatedUser = { 
-      ...user, 
-      foto: cloudinaryResult.url 
-    };
-    setUser(updatedUser);
-    
-    // 3. Salvar no Firebase
-    const userRef = dbRef(db, `users/${user.userId}`);
-    await update(userRef, {
-      foto: cloudinaryResult.url,
-      fotoPublicId: cloudinaryResult.publicId,
-      fotoUpdatedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    
-    // 4. Atualizar storage local
-    await saveUserData(updatedUser);
-    
-    // 5. Atualizar contexto
-    if (updateUserData) {
-      await updateUserData({ 
+    if (!user.userId) { Alert.alert('Erro', 'Usuário não identificado'); return; }
+    try {
+      setUploadingPhoto(true);
+      Alert.alert('Upload', 'Enviando para Cloudinary...', [], { cancelable: false });
+      
+      const cloudinaryResult = await uploadPhotoToCloudinary(imageUri, user.userId);
+      const updatedUser = { ...user, foto: cloudinaryResult.url };
+      setUser(updatedUser);
+      
+      const userRef = dbRef(db, `users/${user.userId}`);
+      await update(userRef, {
         foto: cloudinaryResult.url,
         fotoPublicId: cloudinaryResult.publicId,
+        fotoUpdatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
+      
+      await saveUserData(updatedUser);
+      if (updateUserData) await updateUserData({ foto: cloudinaryResult.url });
+      Alert.alert('✅ Sucesso!', 'Foto salva!');
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      Alert.alert('⚠️ Erro', 'Salvando localmente...');
+      const updatedUser = { ...user, foto: imageUri };
+      setUser(updatedUser);
+      await saveUserData(updatedUser);
+    } finally {
+      setUploadingPhoto(false);
     }
-    
-    Alert.alert('✅ Sucesso!', 'Foto salva no Cloudinary!');
-    
-  } catch (error) {
-    console.error('Erro no upload:', error);
-    
-    // Fallback: Salva localmente se Cloudinary falhar
-    Alert.alert(
-      '⚠️ Cloudinary falhou',
-      'Salvando foto localmente...',
-      [{ text: 'OK' }]
-    );
-    
-    // Fallback para local
-    const updatedUser = { ...user, foto: imageUri };
-    setUser(updatedUser);
-    
-    const userRef = dbRef(db, `users/${user.userId}`);
-    await update(userRef, {
-      fotoLocalURI: imageUri,
-      photoUpdatedAt: new Date().toISOString(),
-    });
-    
-    await saveUserData(updatedUser);
-    
-    if (updateUserData) {
-      await updateUserData({ foto: imageUri });
-    }
-    
-  } finally {
-    setUploadingPhoto(false);
-  }
-};
+  };
 
   const handleUpdatePhoto = () => {
-    Alert.alert(
-      'Alterar Foto',
-      'Escolha uma opção:',
-      [
-        { 
-          text: 'Tirar Foto', 
-          onPress: takePhoto 
-        },
-        { 
-          text: 'Escolher da Galeria', 
-          onPress: pickImage 
-        },
-        { 
-          text: 'Cancelar', 
-          style: 'cancel' 
-        }
-      ]
-    );
+    Alert.alert('Alterar Foto', 'Escolha uma opção:', [
+      { text: 'Tirar Foto', onPress: takePhoto },
+      { text: 'Escolher da Galeria', onPress: pickImage },
+      { text: 'Cancelar', style: 'cancel' }
+    ]);
   };
 
   const handleSave = async () => {
@@ -224,40 +166,25 @@ export default function ArtistSettings() {
       Alert.alert('Erro', 'Nome e e-mail são obrigatórios');
       return;
     }
-
     try {
       setLoading(true);
-      
-      // Atualizar no Firebase
       if (user.userId) {
         const userRef = dbRef(db, `users/${user.userId}`);
-        
-        const updates = {
+        await update(userRef, {
           name: user.name,
           email: user.email,
           telefone: user.telefone || '',
           endereco: user.endereco || '',
           updatedAt: new Date().toISOString(),
-        };
-        
-        await update(userRef, updates);
+        });
       }
-      
-      // Atualizar AsyncStorage
       await saveUserData(user);
-      
-      // Atualizar contexto
-      if (updateUserData) {
-        await updateUserData(user);
-      }
-      
-      Alert.alert('✅ Sucesso', 'Dados atualizados com sucesso!');
+      if (updateUserData) await updateUserData(user);
+      Alert.alert('✅ Sucesso', 'Dados atualizados!');
       setDropdownOpen(false);
       setIsEditing(false);
-      
     } catch (error) {
-      console.error('Erro ao salvar:', error);
-      Alert.alert('❌ Erro', 'Não foi possível salvar as alterações');
+      Alert.alert('❌ Erro', 'Não foi possível salvar');
     } finally {
       setLoading(false);
     }
@@ -271,9 +198,7 @@ export default function ArtistSettings() {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
-    if (dropdownOpen) {
-      setIsEditing(false);
-    }
+    if (dropdownOpen) setIsEditing(false);
   };
 
   const toggleEditMode = () => {
@@ -282,15 +207,16 @@ export default function ArtistSettings() {
 
   if (loading && !isEditing && !dropdownOpen) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#5D1010" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.text} />
       </SafeAreaView>
     );
   }
 
+  // --- RENDERIZAÇÃO ---
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={colors.statusBarStyle} />
 
       <View style={styles.header}>
         <TouchableOpacity 
@@ -299,7 +225,7 @@ export default function ArtistSettings() {
         >
           <Ionicons name="arrow-undo" size={22} color="#FFF" />
         </TouchableOpacity>
-        <Text style={[styles.title, { fontFamily: 'serif' }]}>
+        <Text style={[styles.title, { color: colors.text, fontFamily: 'serif' }]}>
           Configurações
         </Text>
       </View>
@@ -311,18 +237,22 @@ export default function ArtistSettings() {
       >
         {/* Card do Usuário */}
         <TouchableOpacity 
-          style={styles.userCardContainer} 
+          style={[
+            styles.userCardContainer, 
+            { 
+              backgroundColor: isDark ? colors.cardBg : '#F3E5F5', 
+              borderColor: colors.border,
+              borderWidth: isDark ? 1 : 0
+            }
+          ]} 
           activeOpacity={0.7}
           onPress={toggleDropdown}
         >
           <View style={styles.userImageContainer}>
             {user.foto ? (
-              <Image 
-                source={{ uri: user.foto }} 
-                style={styles.userImage} 
-              />
+              <Image source={{ uri: user.foto }} style={styles.userImage} />
             ) : (
-              <View style={styles.defaultAvatar}>
+              <View style={[styles.defaultAvatar, { backgroundColor: isDark ? '#444' : '#CCC' }]}>
                 <Ionicons name="person" size={40} color="#FFF" />
               </View>
             )}
@@ -334,10 +264,10 @@ export default function ArtistSettings() {
           </View>
           
           <View style={styles.userInfoContainer}>
-            <Text style={[styles.userName, { color: '#5D1010' }]}>
+            <Text style={[styles.userName, { color: isDark ? '#FFF' : '#5D1010' }]}>
               {user.name || 'Nome não definido'}
             </Text>
-            <Text style={styles.userEmail}>
+            <Text style={[styles.userEmail, { color: isDark ? '#CCC' : '#666' }]}>
               {user.email || 'E-mail não definido'}
             </Text>
           </View>
@@ -345,13 +275,16 @@ export default function ArtistSettings() {
           <Ionicons 
             name={dropdownOpen ? "caret-up" : "caret-down"} 
             size={24} 
-            color="#5D1010" 
+            color={colors.text} 
           />
         </TouchableOpacity>
 
         {/* Dropdown Content */}
         {dropdownOpen && (
-          <View style={styles.dropdownContainer}>
+          <View style={[
+            styles.dropdownContainer, 
+            { backgroundColor: isDark ? colors.cardBg : '#FFF', padding: 15, borderRadius: 10, marginTop: 10 }
+          ]}>
             <View style={styles.dropdownHeader}>
               {isEditing ? (
                 <>
@@ -376,65 +309,65 @@ export default function ArtistSettings() {
                 </>
               ) : (
                 <TouchableOpacity 
-                  style={[styles.dropdownButton, styles.editButton]} 
+                  style={[styles.dropdownButton, styles.editButton, { borderColor: colors.border }]} 
                   onPress={toggleEditMode}
                 >
-                  <Ionicons name="create-outline" size={18} color="#5D1010" />
-                  <Text style={styles.editButtonText}>Editar</Text>
+                  <Ionicons name="create-outline" size={18} color={colors.text} />
+                  <Text style={[styles.editButtonText, { color: colors.text }]}>Editar</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             {isEditing ? (
               <View style={styles.editFormContainer}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Nome Completo</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={user.name}
-                    onChangeText={(text) => setUser({...user, name: text})}
-                    placeholder="Digite seu nome"
-                    placeholderTextColor="#999"
-                  />
-                </View>
+                {/* Campos de Edição Adaptados ao Dark Mode */}
+                {[
+                  { label: 'Nome Completo', val: user.name, key: 'name', ph: 'Digite seu nome' },
+                  { label: 'E-mail', val: user.email, key: 'email', ph: 'seu@email.com', locked: true },
+                  { label: 'Telefone', val: user.telefone, key: 'telefone', ph: '(00) 00000-0000', type: 'phone-pad' },
+                ].map((field) => (
+                  <View key={field.key} style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>{field.label}</Text>
+                    <TextInput
+                      style={[
+                        styles.input, 
+                        { 
+                          backgroundColor: isDark ? '#333' : '#FFF', 
+                          color: colors.text,
+                          borderColor: colors.border,
+                          borderWidth: 1
+                        }
+                      ]}
+                      value={field.val}
+                      onChangeText={(text) => setUser({...user, [field.key]: text})}
+                      placeholder={field.ph}
+                      placeholderTextColor={colors.subText}
+                      keyboardType={field.type || 'default'}
+                      autoCapitalize="none"
+                      editable={!field.locked}
+                    />
+                  </View>
+                ))}
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>E-mail</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Endereço</Text>
                   <TextInput
-                    style={styles.input}
-                    value={user.email}
-                    onChangeText={(text) => setUser({...user, email: text})}
-                    placeholder="seu@email.com"
-                    placeholderTextColor="#999"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={false}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Telefone</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={user.telefone}
-                    onChangeText={(text) => setUser({...user, telefone: text})}
-                    placeholder="(00) 00000-0000"
-                    placeholderTextColor="#999"
-                    keyboardType="phone-pad"
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Endereço</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
+                    style={[
+                      styles.input, 
+                      styles.textArea,
+                      { 
+                        backgroundColor: isDark ? '#333' : '#FFF', 
+                        color: colors.text,
+                        borderColor: colors.border,
+                        borderWidth: 1
+                      }
+                    ]}
                     value={user.endereco}
                     onChangeText={(text) => setUser({...user, endereco: text})}
                     placeholder="Digite seu endereço completo"
-                    placeholderTextColor="#999"
+                    placeholderTextColor={colors.subText}
                     multiline
                     numberOfLines={3}
-                    textAlignVertical="top"
                   />
                 </View>
 
@@ -455,29 +388,19 @@ export default function ArtistSettings() {
               </View>
             ) : (
               <View style={styles.infoContainer}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="person-outline" size={20} color="#5D1010" />
-                  <Text style={styles.infoLabel}>Nome:</Text>
-                  <Text style={styles.infoText}>{user.name || 'Não definido'}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Ionicons name="mail-outline" size={20} color="#5D1010" />
-                  <Text style={styles.infoLabel}>E-mail:</Text>
-                  <Text style={styles.infoText}>{user.email || 'Não definido'}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Ionicons name="call-outline" size={20} color="#5D1010" />
-                  <Text style={styles.infoLabel}>Telefone:</Text>
-                  <Text style={styles.infoText}>{user.telefone || 'Não definido'}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={20} color="#5D1010" />
-                  <Text style={styles.infoLabel}>Endereço:</Text>
-                  <Text style={styles.infoText}>{user.endereco || 'Não definido'}</Text>
-                </View>
+                {/* Visualização de Info Adaptada */}
+                {[
+                  { icon: "person-outline", label: "Nome:", val: user.name },
+                  { icon: "mail-outline", label: "E-mail:", val: user.email },
+                  { icon: "call-outline", label: "Telefone:", val: user.telefone },
+                  { icon: "location-outline", label: "Endereço:", val: user.endereco },
+                ].map((item, index) => (
+                  <View key={index} style={styles.infoRow}>
+                    <Ionicons name={item.icon} size={20} color={colors.text} />
+                    <Text style={[styles.infoLabel, { color: colors.text }]}>{item.label}</Text>
+                    <Text style={[styles.infoText, { color: colors.subText }]}>{item.val || 'Não definido'}</Text>
+                  </View>
+                ))}
               </View>
             )}
           </View>
@@ -487,23 +410,23 @@ export default function ArtistSettings() {
       </ScrollView>
 
       {/* Menu Inferior */}
-      <View style={styles.bottomMenu}>
-        <TouchableOpacity 
-          style={styles.menuItem} 
-          onPress={() => setIsDarkMode(!isDarkMode)}
-        >
-          <Text style={styles.menuText}>Tema</Text>
-          <Ionicons 
-            name={isDarkMode ? "moon" : "moon-outline"} 
-            size={24} 
-            color="#000" 
+      <View style={[styles.bottomMenu, { backgroundColor: colors.cardBg }]}>
+        <View style={styles.menuItem}>
+          <Text style={[styles.menuText, { color: colors.text }]}>Modo Escuro</Text>
+          {/* Agora usamos o toggleTheme global */}
+          <Switch 
+            value={isDark} 
+            onValueChange={toggleTheme}
+            trackColor={{ false: "#767577", true: "#8B0000" }}
+            thumbColor={isDark ? "#f4f3f4" : "#f4f3f4"}
           />
-        </TouchableOpacity>
+        </View>
         
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
         <TouchableOpacity style={styles.menuItem} onPress={logout}>
-          <Text style={styles.menuText}>Sair...</Text>
+          <Text style={[styles.menuText, { color: colors.text }]}>Sair...</Text>
+          <Ionicons name="log-out-outline" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
       

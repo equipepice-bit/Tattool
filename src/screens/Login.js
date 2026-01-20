@@ -128,7 +128,7 @@ export default function Login() {
 
   return (
     <LinearGradient
-      colors={['#4A148C', '#8B0000', '#5D2510']}
+      colors={['#4A148C', '#43000a', '#5D2510']}
       style={styles.container}
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -146,7 +146,8 @@ export default function Login() {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.title}>TattooI</Text>
+  
+            <Text style={styles.title}>Tattool</Text>
           </View>
 
           {/* Card do Formulário */}
