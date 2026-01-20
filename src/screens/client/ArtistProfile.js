@@ -17,10 +17,13 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import { ref, get } from 'firebase/database';
 import { artistProfileViewStyles as styles } from '../../styles/ArtistProfileViewStyles';
 import { IMAGES } from '../../constants/images';
-import { PortfolioCard } from '../../components/PortfolioCard';
 import { FlashCard } from '../../components/FlashCard';
+import { PortfolioCard } from '../../components/PortfolioCard';
+import { PortfolioCard2 } from '../../components/PortfolioCard2';
 import { BackButton } from '../../components/BackButton';
 import { db } from '../../../firebase';
+
+import { FlashCard2 } from '../../components/FlashCard2';
 
 export default function ArtistProfile() {
   const navigation = useNavigation();
@@ -317,9 +320,9 @@ export default function ArtistProfile() {
                 contentContainerStyle={{ paddingHorizontal: 5 }}
               >
                 {posts.slice(0, 3).map((post) => (
-                  <PortfolioCard 
+                  <PortfolioCard2 
                     key={post.id}
-                    imageUri={post.foto || IMAGES.OCTOPUS_BLACKWORK}
+                    imageUri={post.foto}
                     postData={post}
                     artistId={artistId}
                     artistName={artist.name}
@@ -355,13 +358,13 @@ export default function ArtistProfile() {
                 contentContainerStyle={{ paddingHorizontal: 5 }}
               >
                 {flashes.slice(0, 3).map((flash) => (
-                  <FlashCard 
+                  <FlashCard2 
                     key={flash.id}
-                    imageUri={flash.foto || IMAGES.FLASH_SNAKE}
+                    imageUri={flash.foto}
                     flashData={flash}
                     artistId={artistId}
                     artistName={artist.name}
-                  />
+                  />    
                 ))}
               </ScrollView>
             ) : (

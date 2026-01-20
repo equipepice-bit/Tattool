@@ -259,7 +259,7 @@ export default function ArtistProfileView() {
             <View style={styles.nameRow}>
               <Text style={styles.artistName}>{user?.name || 'Nome não definido'}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('ArtistSettings')}>
-                <MaterialCommunityIcons name="pencil-outline" size={24} color="#5D1010" />
+                <MaterialCommunityIcons name="cog" size={24} color="#5D1010" />
               </TouchableOpacity>
             </View>
 
