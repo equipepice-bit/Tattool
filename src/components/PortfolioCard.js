@@ -3,19 +3,39 @@ import { TouchableOpacity, Image, View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { profileStyles as styles } from '../styles/ProfileStyles';
 
-export const PortfolioCard = ({ imageUri, target = 'ArtistPortfolioDetail', postData }) => {
+export const PortfolioCard = ({ 
+  imageUri, 
+  target = 'ArtistPortfolioDetail', 
+  postData,
+  artistId,
+  artistName
+}) => {
   const navigation = useNavigation();
 
-  // Obter algumas tags para mostrar no card
   const getPreviewTags = () => {
     if (!postData?.tags || postData.tags.length === 0) return '';
     return postData.tags.slice(0, 2).map(tag => `#${tag}`).join(' ');
   };
 
+  const handlePress = () => {
+    // Se tiver artistId e artistName, navega para a tela de detalhes do artista
+    if (postData && artistId && artistName) {
+      navigation.navigate('ArtistPortfolioDetail', {
+        postData,
+        artistId,
+        artistName
+      });
+    } 
+    // Se não, mantém o comportamento original
+    else {
+      navigation.navigate(target, { post: postData });
+    }
+  };
+
   return (
     <TouchableOpacity 
       style={styles.portfolioCard}
-      onPress={() => navigation.navigate(target, { post: postData })}
+      onPress={handlePress}
     >
       <Image source={{ uri: imageUri || postData?.foto }} style={styles.portfolioImage} />
       {postData?.tags && postData.tags.length > 0 && (

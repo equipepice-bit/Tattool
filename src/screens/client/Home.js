@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
   Alert
 } from 'react-native';
 
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ref, get, update } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 
 import { ArtistCard } from '../../components/ArtistCard';
 import { IMAGES } from '../../constants/images';
@@ -24,6 +24,7 @@ import BottomTabs from '../../components/BottomTabs';
 import { useTheme } from '../../context/ThemeContext';
 import { db } from '../../../firebase';
 import { getUserData } from '../../utils/storage';
+import { RTDBService } from '../../services/RTDBService';
 
 export default function Home() {
   const navigation = useNavigation();
@@ -31,52 +32,37 @@ export default function Home() {
   const [artists, setArtists] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Adicione esta linha
 
-  // Pegamos as cores do tema
   const { colors, isDark } = useTheme();
 
-  // Carregar dados
-  const loadData = async () => {
+  const loadUserAndFavorites = useCallback(async () => {
     try {
-      setLoading(true);
-      
-      // Carregar usuário atual
       const userData = await getUserData();
-      setCurrentUser(userData);
+      setUser(userData);
       
-      if (userData) {
-        // Carregar favoritos do usuário
+      if (userData?.uid) {
         await loadUserFavorites(userData.uid);
-        
-        // Carregar todos os tatuadores
-        await loadAllArtists(userData.uid);
+      } else {
+        setFavorites([]);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os tatuadores');
-    } finally {
-      setLoading(false);
+      console.error('Erro ao carregar usuário:', error);
     }
-  };
+  }, []);
 
-  // Carregar favoritos do usuário
   const loadUserFavorites = async (userId) => {
     try {
-      const userRef = ref(db, `users/${userId}`);
-      const snapshot = await get(userRef);
-      
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        setFavorites(userData.favoritos || []);
-      }
+      const favoritesData = await RTDBService.getUserFavorites(userId);
+      const favoriteIds = favoritesData.map(artist => artist.uid || artist.id);
+      setFavorites(favoriteIds);
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error);
     }
   };
 
-  // Carregar todos os tatuadores
-  const loadAllArtists = async (currentUserId) => {
+  const loadAllArtists = useCallback(async () => {
     try {
       const usersRef = ref(db, 'users');
       const snapshot = await get(usersRef);
@@ -85,107 +71,102 @@ export default function Home() {
         const usersData = snapshot.val();
         const artistsArray = [];
         
-        // Filtrar apenas usuários com role "Tattoo Artist" e que não seja o usuário atual
         Object.keys(usersData).forEach(userId => {
-          const user = usersData[userId];
-          if (user.role === 'Tattoo Artist' && userId !== currentUserId) {
+          const userData = usersData[userId];
+          if (userData.role === 'Tattoo Artist') {
+            const isFav = favorites.includes(userId);
+            
             artistsArray.push({
               id: userId,
               uid: userId,
-              name: user.name || 'Tatuador',
-              styles: user.tags ? user.tags.join(', ') : 'Estilos variados',
-              rating: 4.5, // Você pode implementar um sistema de avaliações depois
-              foto: user.foto || IMAGES.ANA_SILVA,
-              tags: user.tags || [],
-              endereco: user.endereco || '',
-              telefone: user.telefone || '',
-              isFavorite: favorites.includes(userId)
+              name: userData.name || 'Tatuador',
+              styles: userData.tags ? userData.tags.join(', ') : 'Estilos variados',
+              rating: userData.rating || 4.5,
+              foto: userData.foto || IMAGES.ANA_SILVA,
+              tags: userData.tags || [],
+              endereco: userData.endereco || '',
+              telefone: userData.telefone || '',
+              isFavorite: isFav,
+              bio: userData.bio || ''
             });
           }
         });
         
         setArtists(artistsArray);
+      } else {
+        setArtists([]);
       }
     } catch (error) {
       console.error('Erro ao carregar tatuadores:', error);
+      setArtists([]);
     }
-  };
+  }, [favorites]);
 
-  // Atualizar quando a tela receber foco
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-      return () => {};
-    }, [])
-  );
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      await loadUserAndFavorites();
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadUserAndFavorites]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (favorites.length >= 0) {
+      loadAllArtists();
+    }
+  }, [favorites, loadAllArtists]);
 
-  // Filtrar artistas por busca
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      setRefreshKey(prev => prev + 1); // Force re-render
+    }, [loadData])
+  );
+
   const filteredArtists = artists.filter((artist) => {
     if (!searchText.trim()) return true;
     
-    const nameMatch = artist.name
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
+    const searchLower = searchText.toLowerCase();
+    const nameMatch = artist.name.toLowerCase().includes(searchLower);
+    const styleMatch = artist.styles.toLowerCase().includes(searchLower);
+    const tagMatch = artist.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+    const bioMatch = artist.bio?.toLowerCase().includes(searchLower);
     
-    const styleMatch = artist.styles
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
-    
-    const tagMatch = artist.tags?.some(tag => 
-      tag.toLowerCase().includes(searchText.toLowerCase())
-    );
-    
-    return nameMatch || styleMatch || tagMatch;
+    return nameMatch || styleMatch || tagMatch || bioMatch;
   });
 
-  // Função para favoritar/desfavoritar
-  const handleToggleFavorite = async (artistId) => {
-    if (!currentUser?.uid) {
-      Alert.alert('Erro', 'Usuário não identificado');
+  const toggleFavorite = async (artistId) => {
+    if (!user?.uid) {
+      Alert.alert('Login necessário', 'Faça login para favoritar artistas');
       return;
     }
 
     try {
-      const userRef = ref(db, `users/${currentUser.uid}`);
-      const snapshot = await get(userRef);
-      
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        let updatedFavorites = [...(userData.favoritos || [])];
-        
-        if (updatedFavorites.includes(artistId)) {
-          // Remover dos favoritos
-          updatedFavorites = updatedFavorites.filter(id => id !== artistId);
-        } else {
-          // Adicionar aos favoritos
-          updatedFavorites.push(artistId);
-        }
-        
-        // Atualizar no Firebase
-        await update(userRef, { favoritos: updatedFavorites });
-        
-        // Atualizar estado local
-        setFavorites(updatedFavorites);
-        
-        // Atualizar lista de artistas
-        setArtists(prevArtists => 
-          prevArtists.map(artist => ({
-            ...artist,
-            isFavorite: updatedFavorites.includes(artist.id)
-          }))
-        );
+      if (favorites.includes(artistId)) {
+        await RTDBService.removeFromFavorites(user.uid, artistId);
+        setFavorites(prev => prev.filter(id => id !== artistId));
+      } else {
+        await RTDBService.addToFavorites(user.uid, artistId);
+        setFavorites(prev => [...prev, artistId]);
       }
+      
+      // Atualiza o estado local dos artistas
+      setArtists(prevArtists => 
+        prevArtists.map(artist => 
+          artist.id === artistId 
+            ? { ...artist, isFavorite: !artist.isFavorite }
+            : artist
+        )
+      );
     } catch (error) {
-      console.error('Erro ao atualizar favoritos:', error);
+      console.error('Erro ao alterar favorito:', error);
       Alert.alert('Erro', 'Não foi possível atualizar os favoritos');
     }
   };
 
-  // Componente de loading
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -199,13 +180,13 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} key={refreshKey}>
       <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.background} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}>
-        {/* Header */}
+        
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Image
@@ -226,30 +207,41 @@ export default function Home() {
           </View>
 
           <View style={styles.headerIcons}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate('Settings')}>
-              <Ionicons
-                name="settings-outline"
-                size={24}
-                color={isDark ? '#FFF' : COLORS.logoText}
-              />
-            </TouchableOpacity>
+            {user && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => navigation.navigate('Settings')}>
+                <Ionicons
+                  name="settings-outline"
+                  size={24}
+                  color={isDark ? '#FFF' : COLORS.logoText}
+                />
+              </TouchableOpacity>
+            )}
             
-            {/* Botão para favoritos */}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate('Favorites')}>
+              onPress={() => {
+                if (user) {
+                  navigation.navigate('Favorites');
+                } else {
+                  navigation.navigate('Login');
+                }
+              }}>
               <Ionicons
                 name="heart"
                 size={24}
-                color={isDark ? '#FF6B6B' : '#FF0000'}
+                color={favorites.length > 0 ? '#FF0000' : (isDark ? '#FF6B6B' : '#888')}
               />
+              {favorites.length > 0 && (
+                <View style={[styles.favoriteBadge, { backgroundColor: '#FF0000' }]}>
+                  <Text style={styles.favoriteBadgeText}>{favorites.length}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Busca */}
         <View style={[styles.searchContainer, { backgroundColor: colors.cardBg }]}>
           <Ionicons name="search-outline" size={20} color={colors.subText} />
           <TextInput
@@ -266,28 +258,31 @@ export default function Home() {
           )}
         </View>
 
-        {/* Contador de resultados */}
         <View style={styles.resultsContainer}>
           <Text style={[styles.resultsText, { color: colors.text }]}>
             {filteredArtists.length} tatuador{filteredArtists.length !== 1 ? 'es' : ''} encontrado{filteredArtists.length !== 1 ? 's' : ''}
           </Text>
-          {favorites.length > 0 && (
-            <TouchableOpacity onPress={() => navigation.navigate('Favorites')}>
-              <Text style={[styles.favoritesText, { color: '#FF0000' }]}>
+          {user && favorites.length > 0 && (
+            <TouchableOpacity 
+              style={[styles.favoritesButton, { 
+                backgroundColor: isDark ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 0, 0, 0.05)' 
+              }]}
+              onPress={() => navigation.navigate('Favorites')}>
+              <Ionicons name="heart" size={16} color="#FF0000" />
+              <Text style={[styles.favoritesText, { color: '#FF0000', marginLeft: 5 }]}>
                 {favorites.length} favorito{favorites.length !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Grid de Artistas */}
         {filteredArtists.length > 0 ? (
           <View style={styles.gridContainer}>
             {filteredArtists.map((artist) => (
               <ArtistCard 
                 key={artist.id} 
                 artist={artist}
-                onToggleFavorite={handleToggleFavorite}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </View>
@@ -295,16 +290,22 @@ export default function Home() {
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={80} color={colors.subText} />
             <Text style={[styles.emptyText, { color: colors.text }]}>
-              Nenhum tatuador encontrado
+              {searchText ? 'Nenhum resultado encontrado' : 'Nenhum tatuador disponível'}
             </Text>
             <Text style={[styles.emptySubtext, { color: colors.subText }]}>
-              {searchText ? 'Tente buscar por outros termos' : 'Os tatuadores aparecerão aqui'}
+              {searchText ? 'Tente buscar por outros termos' : 'Os tatuadores aparecerão aqui quando estiverem cadastrados'}
             </Text>
+            {!user && (
+              <TouchableOpacity
+                style={[styles.loginButton, { backgroundColor: colors.primary }]}
+                onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.loginButtonText}>Fazer login para favoritar</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
 
-      {/* Navegação Inferior */}
       <BottomTabs currentRoute={'Home'} navigation={navigation} />
     </SafeAreaView>
   );
