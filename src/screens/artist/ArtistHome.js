@@ -1,302 +1,399 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   Image, 
-  TouchableOpacity, 
   ScrollView, 
+  TouchableOpacity, 
   StatusBar,
-  StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
-import { 
-  Ionicons, 
-  FontAwesome, 
-  MaterialIcons, 
-  MaterialCommunityIcons 
-} from '@expo/vector-icons';
-import { Calendar, LocaleConfig } from 'react-native-calendars';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, FontAwesome, FontAwesome5, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { ref, get } from 'firebase/database';
 
-// Imports Internos
-import { artistHomeStyles as styles } from '../../styles/ArtistHomeStyles';
+import { artistProfileViewStyles as styles } from '../../styles/ArtistProfileViewStyles';
+import { IMAGES } from '../../constants/images';
+import { PortfolioCard } from '../../components/PortfolioCard';
+import { FlashCard } from '../../components/FlashCard';
+import { BackButton } from '../../components/BackButton';
 import { getUserData } from '../../utils/storage';
-import { useTheme } from '../../context/ThemeContext';
+import { db } from '../../../firebase';
 
-// Configuração do Calendário para PT-BR
-LocaleConfig.locales['pt-br'] = {
-  monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-  monthNamesShort: ['Jan.','Fev.','Mar.','Abr.','Mai.','Jun.','Jul.','Ago.','Set.','Out.','Nov.','Dez.'],
-  dayNames: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],
-  dayNamesShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
-  today: 'Hoje'
-};
-LocaleConfig.defaultLocale = 'pt-br';
-
-export default function ArtistHome() {
+export default function ArtistProfileView() {
   const navigation = useNavigation();
-  const { colors, isDark } = useTheme(); // Hook do Tema
-  
-  const [selectedDate, setSelectedDate] = useState('');
   const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [flashes, setFlashes] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- DADOS MOCKADOS (Exemplo) ---
-  const agendamentos = [
-    { id: 1, nome: 'Carlos Souza' },
-    { id: 2, nome: 'Marina Lima' },
-    { id: 3, nome: 'Roberto Alves' },
-  ];
-  
-  const totalAgendamentos = agendamentos.length;
-  const mediaAvaliacoes = 4.8;
-
-  // --- CARREGAMENTO DE DADOS ---
-  const loadUserData = async () => {
+  // Carregar todos os dados
+  const loadAllData = async () => {
     try {
+      setLoading(true);
+      
+      // Carregar dados do usuário
       const userData = await getUserData();
       if (userData) {
         setUser(userData);
+        
+        // Carregar posts
+        if (userData.uid) {
+          await loadUserPosts(userData.uid);
+          await loadUserFlashes(userData.uid);
+          await loadUserReviews(userData.uid);
+        }
       }
     } catch (error) {
-      console.error("Erro ao carregar usuário", error);
+      console.error('Erro ao carregar dados:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os dados do perfil');
     } finally {
       setLoading(false);
     }
   };
 
+  // Carregar posts do usuário
+  const loadUserPosts = async (userId) => {
+    try {
+      const postsRef = ref(db, `posts/${userId}`);
+      const postsSnapshot = await get(postsRef);
+      
+      if (postsSnapshot.exists()) {
+        const postsData = postsSnapshot.val();
+        const postsArray = Object.keys(postsData).map(key => ({
+          id: key,
+          ...postsData[key],
+          type: 'post'
+        }));
+        setPosts(postsArray);
+      } else {
+        setPosts([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar posts:', error);
+      setPosts([]);
+    }
+  };
+
+  // Carregar flashes do usuário
+  const loadUserFlashes = async (userId) => {
+    try {
+      const flashesRef = ref(db, `flashes/${userId}`);
+      const flashesSnapshot = await get(flashesRef);
+      
+      if (flashesSnapshot.exists()) {
+        const flashesData = flashesSnapshot.val();
+        const flashesArray = Object.keys(flashesData).map(key => ({
+          id: key,
+          ...flashesData[key],
+          type: 'flash'
+        }));
+        setFlashes(flashesArray);
+      } else {
+        setFlashes([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar flashes:', error);
+      setFlashes([]);
+    }
+  };
+
+  // Carregar avaliações (opcional - pode ser implementado depois)
+  const loadUserReviews = async (userId) => {
+    try {
+      // Exemplo de estrutura de reviews (se você tiver)
+      const reviewsRef = ref(db, `reviews/${userId}`);
+      const reviewsSnapshot = await get(reviewsRef);
+      
+      if (reviewsSnapshot.exists()) {
+        const reviewsData = reviewsSnapshot.val();
+        const reviewsArray = Object.keys(reviewsData).map(key => ({
+          id: key,
+          ...reviewsData[key]
+        }));
+        setReviews(reviewsArray);
+      } else {
+        // Dados de exemplo caso não tenha avaliações reais
+        setReviews([
+          { id: '1', userName: 'Carlos Silva', comment: 'Excelente trabalho!', rating: 5 },
+          { id: '2', userName: 'Maria Santos', comment: 'Profissional muito talentoso!', rating: 4 },
+        ]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar avaliações:', error);
+      setReviews([]);
+    }
+  };
+
+  // Atualizar quando a tela receber foco
   useFocusEffect(
-    useCallback(() => {
-      loadUserData();
+    React.useCallback(() => {
+      loadAllData();
+      return () => {};
     }, [])
   );
 
-  // --- RENDER ---
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  // Função para formatar as tags
+  const formatTags = (tags) => {
+    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+      return '#tattoo #artist';
+    }
+    
+    // Limitar a 5 tags para não ficar muito longo
+    const limitedTags = tags.slice(0, 5);
+    return limitedTags.map(tag => `#${tag}`).join(' ');
+  };
+
+  // Função para obter a foto do usuário ou imagem padrão
+  const getUserImage = () => {
+    if (user?.foto && user.foto.trim() !== '') {
+      return { uri: user.foto };
+    }
+    return IMAGES.ANA_SILVA;
+  };
+
+  // Função para obter o endereço formatado
+  const getFormattedAddress = () => {
+    if (!user?.endereco) return 'Local não definido';
+    
+    // Pegar apenas a primeira parte do endereço (geralmente a rua)
+    const parts = user.endereco.split(',');
+    return parts[0].trim();
+  };
+
+  // Função para renderizar estrelas
+  const renderStars = (rating) => {
+    return (
+      <View style={{ flexDirection: 'row', marginTop: 5 }}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <FontAwesome
+            key={star}
+            name={star <= rating ? "star" : "star-o"}
+            size={14}
+            color="#FFD700"
+            style={{ marginRight: 2 }}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  // Componente vazio quando não há conteúdo
+  const EmptyContent = ({ type }) => (
+    <View style={styles.emptyContainer}>
+      <MaterialIcons 
+        name={type === 'post' ? "photo-library" : "flash-on"} 
+        size={50} 
+        color="#CCC" 
+      />
+      <Text style={styles.emptyText}>
+        {type === 'post' ? 'Nenhum post no portfólio' : 'Nenhum flash disponível'}
+      </Text>
+      <TouchableOpacity 
+        style={styles.addButton}
+        onPress={() => navigation.navigate(type === 'post' ? 'AddPost' : 'AddFlash')}
+      >
+        <Text style={styles.addButtonText}>
+          Adicionar {type === 'post' ? 'Post' : 'Flash'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#5D1010" />
+          <Text style={{ marginTop: 10, color: '#5D1010' }}>Carregando perfil...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
-      
-      <ScrollView 
-        style={[styles.container, { backgroundColor: colors.background }]} 
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 }]} 
-        showsVerticalScrollIndicator={false}
-      >
-        {/* === HEADER DO PERFIL === */}
-        <View style={[styles.header, { backgroundColor: colors.background }]}>
-          <TouchableOpacity onPress={() => navigation.navigate('ArtistProfileView')}>
-            <Image 
-              source={{ uri: user?.foto || 'https://images.unsplash.com/photo-1594069811326-0be65746369c?q=80&w=200' }} 
-              style={[styles.profilePic, { borderColor: colors.primary, borderWidth: 1 }]} 
-            />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={{ flex: 1, paddingHorizontal: 10 }} 
-            onPress={() => navigation.navigate('ArtistProfileView')}
-          >
-            <View style={styles.headerInfo}>
-              <Text style={[styles.artistName, { color: colors.text }]}>
-                {user?.name || 'Artista'}
-              </Text>
-              <Text style={[styles.artistRole, { color: colors.subText }]}>
-                Tatuador(a) Profissional
-              </Text>
-            </View>
-          </TouchableOpacity>
-          
-          {/* Badge de Status */}
-          <View style={[
-            styles.statusBadge, 
-            { 
-              backgroundColor: isDark ? 'rgba(76, 175, 80, 0.2)' : '#E8F5E9',
-              borderColor: isDark ? '#4CAF50' : 'transparent',
-              borderWidth: isDark ? 1 : 0
-            }
-          ]}>
-            <Text style={[styles.statusText, { color: isDark ? '#81C784' : '#2E7D32' }]}>
-              Disponível
-            </Text>
-          </View>
-          
-          {/* Botão Configurações */}
-          <TouchableOpacity 
-            style={{ marginLeft: 15 }} 
-            onPress={() => navigation.navigate('ArtistSettings')}
-          >
-            <Ionicons name="settings-outline" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-        {/* === ESTATÍSTICAS === */}
-        <View style={localStyles.statsContainer}>
-          {/* Card Agendamentos */}
-          <View style={[
-            localStyles.statCard, 
-            { backgroundColor: colors.cardBg, borderColor: colors.border }
-          ]}>
-            <View style={localStyles.statIconContainer}>
-              <MaterialCommunityIcons 
-                name="calendar-clock" 
-                size={28} 
-                color={isDark ? '#BB86FC' : '#4A148C'} 
+      <ScrollView
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 160 }}
+      >
+        <LinearGradient
+          colors={['#4A148C', '#8B0000', '#5D2510']}
+          style={styles.headerGradient}
+        >
+          
+        </LinearGradient>
+
+        <View style={styles.profileContent}>
+          {/* Top Row: Avatar + Localização */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: -60, paddingHorizontal: 20 }}>
+            <View style={styles.avatarContainer}>
+              <Image 
+                source={getUserImage()} 
+                style={styles.avatar} 
               />
             </View>
-            <View style={localStyles.statContent}>
-              <Text style={[localStyles.statNumber, { color: colors.text }]}>
-                {totalAgendamentos.toString().padStart(2, '0')}
-              </Text>
-              <Text style={[localStyles.statLabel, { color: colors.subText }]}>
-                Agendamentos
+
+            <View style={styles.locationRow}>
+              <Ionicons name="location-sharp" size={18} color="#333" />
+              <Text style={styles.locationText}>
+                {getFormattedAddress()}
               </Text>
             </View>
           </View>
 
-          {/* Card Avaliação */}
-          <View style={[
-            localStyles.statCard, 
-            { backgroundColor: colors.cardBg, borderColor: colors.border }
-          ]}>
-            <View style={localStyles.statIconContainer}>
-              <FontAwesome name="star" size={28} color="#FFD700" />
+          <View style={{ paddingHorizontal: 20 }}>
+            {/* Nome e botão de edição */}
+            <View style={styles.nameRow}>
+              <Text style={styles.artistName}>{user?.name || 'Nome não definido'}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('ArtistSettings')}>
+                <MaterialCommunityIcons name="pencil-outline" size={24} color="#5D1010" />
+              </TouchableOpacity>
             </View>
-            <View style={localStyles.statContent}>
-              <Text style={[localStyles.statNumber, { color: colors.text }]}>
-                {mediaAvaliacoes.toFixed(1)}
-              </Text>
-              <Text style={[localStyles.statLabel, { color: colors.subText }]}>
-                Avaliação Média
-              </Text>
+
+            {/* Redes sociais */}
+            <View style={styles.socialRow}>
+              <TouchableOpacity onPress={() => {
+                if (user?.telefone) {
+                  Alert.alert(
+                    'WhatsApp',
+                    `Abrir conversa no WhatsApp com ${user.telefone}?`,
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      { 
+                        text: 'Abrir', 
+                        onPress: () => {
+                          // Implementar abertura do WhatsApp
+                          Alert.alert('Em desenvolvimento', 'Funcionalidade do WhatsApp em breve!');
+                        }
+                      }
+                    ]
+                  );
+                } else {
+                  Alert.alert('Sem contato', 'Telefone não disponível');
+                }
+              }}>
+                <FontAwesome5 name="whatsapp" size={32} color="#333" />
+              </TouchableOpacity>
+              {/* Adicione outras redes sociais se o usuário tiver */}
+              {/* <FontAwesome5 name="instagram" size={32} color="#333" />
+              <FontAwesome5 name="behance" size={32} color="#333" /> */}
+            </View>
+
+            {/* Tags do usuário */}
+            <Text style={styles.stylesLabel}>Estilos com que trabalha:</Text>
+            <Text style={styles.stylesList}>
+              {formatTags(user?.tags || [])}
+            </Text>
+
+            {/* PORTFÓLIO */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Portfólio</Text>
               
-              {/* Estrelinhas */}
-              <View style={localStyles.ratingStars}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FontAwesome
-                    key={star}
-                    name="star"
-                    size={12}
-                    color="#FFD700"
-                    style={{ marginRight: 2 }}
+            </View>
+            
+            {posts.length > 0 ? (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 5 }}
+              >
+                {posts.slice(0, 3).map((post) => (
+                  <PortfolioCard 
+                    key={post.id}
+                    imageUri={post.foto || IMAGES.OCTOPUS_BLACKWORK}
+                    target="ArtistPortfolioDetail"
+                    postData={post}
                   />
                 ))}
-              </View>
+              </ScrollView>
+            ) : (
+              <EmptyContent type="post" />
+            )}
+
+            {/* FLASHES DISPONÍVEIS */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Flash</Text>
+              
             </View>
+            
+            {flashes.length > 0 ? (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 5 }}
+              >
+                {flashes.slice(0, 3).map((flash) => (
+                  <FlashCard 
+                    key={flash.id}
+                    imageUri={flash.foto || IMAGES.FLASH_SNAKE}
+                    target="ArtistFlashDetail"
+                    flashData={flash}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <EmptyContent type="flash" />
+            )}
+
+            {/* AVALIAÇÕES */}
+            {/* <Text style={styles.sectionTitle}>Avaliações</Text>
+            {reviews.length > 0 ? (
+              reviews.map((review) => (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.userAvatar}>
+                    <FontAwesome name="user" size={24} color="#FFF" />
+                  </View>
+                  <View style={styles.reviewContent}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.reviewerName}>{review.userName || 'Anônimo'}</Text>
+                      {review.rating && renderStars(review.rating)}
+                    </View>
+                    <Text style={styles.reviewText}>
+                      {review.comment || 'Avaliação sem comentário'}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyReview}>
+                <Text style={styles.emptyReviewText}>Nenhuma avaliação ainda</Text>
+              </View>
+            )} */}
           </View>
         </View>
-
-        {/* === CALENDÁRIO === */}
-        <View style={[
-          styles.calendarCard, 
-          { 
-            backgroundColor: colors.cardBg, 
-            borderColor: colors.border,
-            borderWidth: 1,
-            marginTop: 10
-          }
-        ]}>
-          <View style={localStyles.calendarHeader}>
-            <Text style={[styles.selectDateLabel, { color: colors.text }]}>
-              Sua Agenda
-            </Text>
-            <MaterialIcons name="event" size={24} color={colors.subText} />
-          </View>
-          
-          <Calendar
-            onDayPress={day => setSelectedDate(day.dateString)}
-            markedDates={{ 
-              [selectedDate]: {
-                selected: true, 
-                selectedColor: colors.primary, // Cor vinho/roxo definida no tema
-                selectedTextColor: '#FFF'
-              }
-            }}
-            theme={{ 
-              // Cores adaptativas
-              calendarBackground: 'transparent',
-              textSectionTitleColor: isDark ? '#BB86FC' : '#4A148C',
-              selectedDayBackgroundColor: '#BB86FC',
-              selectedDayTextColor: '#ffffff',
-              todayTextColor: '#ffffff',
-              dayTextColor: '#ceb9b9',
-              textDisabledColor: colors.border,
-              dotColor: colors.primary,
-              selectedDotColor: '#ffffff',
-              arrowColor: isDark ? '#FFF' : '#4A148C',
-              disabledArrowColor: '#d9e1e8',
-              monthTextColor: colors.text,
-              indicatorColor: colors.primary,
-              textDayFontWeight: '500',
-              textMonthFontWeight: 'bold',
-              textDayHeaderFontWeight: 'bold',
-              textDayFontSize: 16,
-              textMonthFontSize: 18,
-              textDayHeaderFontSize: 13
-            }}
-          />
-        </View>
-        
-        {/* Espaço extra no final já que não tem barra inferior */}
-        <View style={{ height: 30 }} />
-
       </ScrollView>
+
+      {/* Botões flutuantes */}
+      <View style={styles.floatingButtons}>
+        <TouchableOpacity
+          style={[styles.floatingButton, styles.flashButton]}
+          onPress={() => navigation.navigate('AddFlash')}
+        >
+          <MaterialIcons name="flash-on" size={24} color="#FFF" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.floatingButton, styles.postButton]}
+          onPress={() => navigation.navigate('AddPost')}
+        >
+          <MaterialIcons name="add-a-photo" size={24} color="#FFF" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
-
-// Estilos locais apenas para layout (cores vêm do style inline)
-const localStyles = StyleSheet.create({
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 20,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    elevation: 2, // Sombra Android
-    shadowOpacity: 0.1, // Sombra iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statIconContainer: {
-    marginRight: 15,
-  },
-  statContent: {
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  ratingStars: {
-    flexDirection: 'row',
-    marginTop: 4,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 5,
-  }
-});
