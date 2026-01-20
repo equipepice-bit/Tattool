@@ -94,5 +94,163 @@ export const artistFlashDetailStyles = StyleSheet.create({
     textAlign: 'center',
     padding: 0,
     minWidth: 60,
-  }
+  },
+  // Estilos comuns para ambas as telas:
+
+section: {
+  marginBottom: 20,
+},
+
+sectionLabel: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#4A148C',
+  marginBottom: 8,
+},
+
+tagInputContainer: {
+  flexDirection: 'row',
+  marginBottom: 10,
+},
+
+tagInput: {
+  flex: 1,
+  backgroundColor: '#FFF',
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+  borderRadius: 8,
+  paddingHorizontal: 15,
+  paddingVertical: 12,
+  marginRight: 10,
+  fontSize: 16,
+},
+
+addTagButton: {
+  backgroundColor: '#5D1010',
+  width: 50,
+  height: 50,
+  borderRadius: 8,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+multipleTagsButton: {
+  backgroundColor: '#8B0000',
+  padding: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginBottom: 15,
+},
+
+multipleTagsText: {
+  color: '#FFF',
+  fontWeight: 'bold',
+  fontSize: 14,
+},
+
+tagsList: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  marginTop: 10,
+},
+
+tagItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#5D1010',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 20,
+  marginRight: 8,
+  marginBottom: 8,
+},
+
+tagText: {
+  color: '#FFF',
+  marginRight: 5,
+  fontSize: 12,
+},
+
+noTagsText: {
+  color: '#999',
+  fontStyle: 'italic',
+  fontSize: 14,
+},
+
+input: {
+  backgroundColor: '#FFF',
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+  borderRadius: 8,
+  paddingHorizontal: 15,
+  paddingVertical: 12,
+  fontSize: 16,
+},
+
+valueContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+currencySymbol: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+  marginRight: 10,
+},
+
+valueInput: {
+  flex: 1,
+},
+
+valueText: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+},
+
+systemInfo: {
+  backgroundColor: '#F5F5F5',
+  padding: 15,
+  borderRadius: 10,
+  marginTop: 20,
+  marginBottom: 20,
+},
+
+systemInfoText: {
+  fontSize: 12,
+  color: '#666',
+  marginBottom: 4,
+},
+
+actionButtons: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 20,
+},
+
+actionButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 20,
+  paddingVertical: 12,
+  borderRadius: 8,
+  flex: 1,
+  marginHorizontal: 5,
+},
+
+deleteButton: {
+  backgroundColor: '#FF6B6B',
+},
+
+shareButton: {
+  backgroundColor: '#4A148C',
+},
+
+actionButtonText: {
+  color: '#FFF',
+  fontWeight: 'bold',
+  marginLeft: 8,
+},
 });

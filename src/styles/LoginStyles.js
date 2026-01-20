@@ -157,4 +157,18 @@ loaderText: {
   color: '#5D1010',
   fontWeight: '500',
 },
+tagItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#5D1010',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  tagText: {
+    color: '#FFF',
+    marginRight: 5,
+    fontSize: 12,
+  },
 });

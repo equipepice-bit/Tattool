@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context'; // adicionar em todas as páginas
-import { AntDesign } from '@expo/vector-icons';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
@@ -24,6 +24,8 @@ import { auth, db } from "../../firebase";
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ref, get } from 'firebase/database';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export default function Login() {
   const navigation = useNavigation();
   const [userRole, setUserRole] = useState('');
@@ -32,6 +34,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -60,6 +63,14 @@ export default function Login() {
       }
       
       const userData = snapshot.val();
+
+      try {
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        console.log('Dados do usuário salvos no AsyncStorage');
+      } catch (storageError) {
+        console.error('Erro ao salvar no AsyncStorage:', storageError);
+      }
+
       const userRole = userData.role;
       console.log('Role encontrado:', userRole);
       
@@ -212,6 +223,32 @@ export default function Login() {
           <View style={styles.bottomSpacer} /> */}
 
         </KeyboardAvoidingView>
+        {isLoading && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                  }}>
+                    <View style={{
+                      backgroundColor: '#FFF',
+                      padding: 30,
+                      borderRadius: 15,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <ActivityIndicator size="large" color="#5D1010" />
+                      <Text style={{ marginTop: 15, fontSize: 16, color: '#5D1010' }}>
+                        Fazendo Login...
+                      </Text>
+                    </View>
+                  </View>
+                )}
       </SafeAreaView>
     </LinearGradient>
   );

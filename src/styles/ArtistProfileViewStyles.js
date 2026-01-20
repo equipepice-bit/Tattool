@@ -153,4 +153,30 @@ export const artistProfileViewStyles = StyleSheet.create({
     color: '#444',
     lineHeight: 20,
   },
+
+  floatingButtons: {
+  position: 'absolute',
+  bottom: 30,
+  right: 20,
+  alignItems: 'flex-end',
+},
+floatingButton: {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  marginBottom: 15,
+},
+flashButton: {
+  backgroundColor: '#8B0000',
+},
+postButton: {
+  backgroundColor: '#5D1010',
+},
 });

@@ -10,6 +10,10 @@ import ArtistProfileView from '../screens/artist/ArtistProfileView';
 import ArtistPortfolioDetail from '../screens/artist/ArtistPortfolioDetail';
 import ArtistFlashDetail from '../screens/artist/ArtistFlashDetail';
 
+import AddContentMenu from '../screens/artist/AddContentMenu';
+import AddFlashScreen from '../screens/artist/AddFlashScreen';
+import AddPostScreen from '../screens/artist/AddPostScreen';
+
 const Stack = createStackNavigator();
 
 export default function ArtistStack() {
@@ -23,6 +27,9 @@ export default function ArtistStack() {
       <Stack.Screen name="ArtistProfileView" component={ArtistProfileView} /> 
       <Stack.Screen name="ArtistPortfolioDetail" component={ArtistPortfolioDetail} />
       <Stack.Screen name="ArtistFlashDetail" component={ArtistFlashDetail} />
+      <Stack.Screen name="AddContentMenu" component={AddContentMenu} />
+      <Stack.Screen name="AddFlash" component={AddFlashScreen} />
+      <Stack.Screen name="AddPost" component={AddPostScreen} />
     </Stack.Navigator>
   );
 }

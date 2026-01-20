@@ -46,7 +46,7 @@ export default function ArtistTabs() {
               name={focused ? "home" : "home-outline"} 
               size={32} 
               color="#5D0000" 
-              style={{ marginTop: 0 }} // Garante que não tenha margem no topo
+              style={{ marginTop: 0 }} 
             />
           )
         }}
