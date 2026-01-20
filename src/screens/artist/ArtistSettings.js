@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StatusBar } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 // Importação dos estilos e contexto

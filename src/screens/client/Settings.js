@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   StatusBar,
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Importação dos estilos
 import { settingsStyles as styles } from '../../styles/SettingsStyles';

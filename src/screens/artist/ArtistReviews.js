@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { artistHomeStyles as styles } from '../../styles/ArtistHomeStyles';
 import { BackButton } from '../../components/BackButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ArtistReviews() {
   const reviews = [

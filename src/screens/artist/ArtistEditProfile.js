@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Image } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { settingsStyles as styles } from '../../styles/SettingsStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ArtistEditProfile() {
   const navigation = useNavigation();

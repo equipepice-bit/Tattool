@@ -17,6 +17,7 @@ import {
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native';
 import { artistHomeStyles as styles } from '../../styles/ArtistHomeStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ArtistHome() {
   const navigation = useNavigation();

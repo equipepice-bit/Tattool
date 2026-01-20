@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { artistPortfolioDetailStyles as styles } from '../../styles/ArtistPortfolioDetailStyles';
 import { BackButton } from '../../components/BackButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ArtistPortfolioDetail() {
   const route = useRoute();

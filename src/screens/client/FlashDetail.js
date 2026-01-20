@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, SafeAreaView, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StatusBar, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { flashStyles as styles } from '../../styles/FlashStyles';

@@ -5,13 +5,13 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Image,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArtistCard } from '../../components/ArtistCard';
 import { IMAGES } from '../../constants/images';

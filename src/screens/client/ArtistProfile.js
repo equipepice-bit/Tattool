@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { profileStyles as styles } from '../../styles/ProfileStyles';
 import { IMAGES } from '../../constants/images';

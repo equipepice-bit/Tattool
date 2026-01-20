@@ -4,6 +4,7 @@ import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { artistFlashDetailStyles as styles } from '../../styles/ArtistFlashDetailStyles';
 import { BackButton } from '../../components/BackButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ArtistFlashDetail() {
   const route = useRoute();
