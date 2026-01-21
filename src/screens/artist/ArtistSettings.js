@@ -68,25 +68,29 @@ export default function ArtistSettings() {
   }, [contextUser]);
 
   const loadUserData = async () => {
-    try {
-      setLoading(true);
-      const userData = await getUserData();
-      if (userData) {
-        setUser({
-          name: userData.name || '',
-          email: userData.email || '',
-          telefone: userData.telefone || '',
-          endereco: userData.endereco || '',
-          foto: userData.foto || '',
-          userId: userData.uid || '',
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    const userData = await getUserData();
+    console.log('ArtistSettings - Dados carregados:', userData);
+    
+    if (userData) {
+      setUser({
+        name: userData.name || '',
+        email: userData.email || '',
+        telefone: userData.telefone || '',
+        endereco: userData.endereco || '',
+        foto: userData.foto || '',
+        userId: userData.uid || '', // 🔥 USA uid DO userData
+        role: userData.role || ''
+      });
     }
-  };
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    Alert.alert('Erro', 'Não foi possível carregar dados do usuário');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ... (MANTIVE AS FUNÇÕES DE FOTO E UPLOAD IGUAIS PARA NÃO QUEBRAR A LÓGICA) ...
   const pickImage = async () => {
@@ -162,33 +166,66 @@ export default function ArtistSettings() {
   };
 
   const handleSave = async () => {
-    if (!user.name.trim() || !user.email.trim()) {
-      Alert.alert('Erro', 'Nome e e-mail são obrigatórios');
-      return;
+  if (!user.name.trim() || !user.email.trim()) {
+    Alert.alert('Erro', 'Nome e e-mail são obrigatórios');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    
+    // Atualizar no Firebase
+    if (user.userId) {
+      const userRef = dbRef(db, `users/${user.userId}`);
+      
+      const updates = {
+        name: user.name,
+        email: user.email,
+        telefone: user.telefone || '',
+        endereco: user.endereco || '',
+        updatedAt: new Date().toISOString(),
+      };
+      
+      await update(userRef, updates);
     }
-    try {
-      setLoading(true);
-      if (user.userId) {
-        const userRef = dbRef(db, `users/${user.userId}`);
-        await update(userRef, {
-          name: user.name,
-          email: user.email,
-          telefone: user.telefone || '',
-          endereco: user.endereco || '',
-          updatedAt: new Date().toISOString(),
-        });
+    
+    // 🔥 ATUALIZAR AsyncStorage CORRETAMENTE
+    const userData = await getUserData(); // Pega dados atuais
+    const updatedUserData = {
+      ...userData, // Mantém todos os dados existentes
+      uid: user.userId, // Garante que uid está presente
+      name: user.name,
+      email: user.email,
+      telefone: user.telefone || '',
+      endereco: user.endereco || '',
+      foto: user.foto || '',
+      // Mantém outros campos como role, etc.
+    };
+    
+    await saveUserData(updatedUserData);
+    
+    // Atualizar contexto se existir
+    if (updateUserData) await updateUserData(updatedUserData);
+    
+    Alert.alert('✅ Sucesso', 'Dados atualizados!', [
+      { 
+        text: 'OK',
+        onPress: () => {
+          setDropdownOpen(false);
+          setIsEditing(false);
+          // 🔥 Recarrega os dados para garantir sincronização
+          loadUserData();
+        }
       }
-      await saveUserData(user);
-      if (updateUserData) await updateUserData(user);
-      Alert.alert('✅ Sucesso', 'Dados atualizados!');
-      setDropdownOpen(false);
-      setIsEditing(false);
-    } catch (error) {
-      Alert.alert('❌ Erro', 'Não foi possível salvar');
-    } finally {
-      setLoading(false);
-    }
-  };
+    ]);
+    
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    Alert.alert('❌ Erro', 'Não foi possível salvar');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     loadUserData();
