@@ -56,25 +56,41 @@ export const flashStyles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
   },
+  
+  /* Container da imagem - Centralizado apenas horizontalmente */
+  imageContainer: {
+    alignItems: 'center', // Centraliza horizontalmente
+    backgroundColor: '#FFF',
+    paddingVertical: 20,
+    marginTop: 10,
+  },
+  
+  /* Wrapper para imagem */
   imageWrapper: {
     backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 20,
-    borderWidth: 3,
+    padding: 10,
+    borderRadius: 15,
+    borderWidth: 2,
     borderColor: '#8B0000',
-    elevation: 10,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    alignItems: 'center', // Centraliza a imagem dentro do wrapper
   },
+  
+  /* Imagem - Centralizada horizontalmente */
   flashImage: {
-    width: 250,
-    height: 250,
-    borderRadius: 10,
+    width: 300, // Largura fixa
+    height: 300, // Altura fixa
+    borderRadius: 8,
+    alignSelf: 'center', // Garante centralização horizontal
   },
+  
   infoSection: {
     paddingHorizontal: 30,
-    marginTop: 30,
+    marginTop: 20,
+    marginBottom: 20,
   },
   infoTitle: {
     fontSize: 22,
@@ -86,10 +102,24 @@ export const flashStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  detailsLeft: {
+    flex: 1,
+  },
   detailLabel: {
     fontSize: 16,
     color: '#444',
-    marginBottom: 15,
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B0000',
+    marginTop: 5,
   },
   detailsRight: {
     alignItems: 'flex-end',
@@ -99,7 +129,7 @@ export const flashStyles = StyleSheet.create({
     borderColor: '#4A148C',
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 3,
+    paddingVertical: 5,
     marginBottom: 10,
     minWidth: 100,
     alignItems: 'center',
@@ -121,19 +151,38 @@ export const flashStyles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  agendarBtn: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    borderWidth: 2,
-    borderColor: '#0056b3',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 60,
+  description: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+    marginTop: 20,
+    marginBottom: 25,
   },
-  agendarBtnText: {
-    color: '#0056b3',
+  actionButton: {
+    backgroundColor: '#8B0000',
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  actionButtonText: {
+    color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  artistInfo: {
+    backgroundColor: '#FFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  artistText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

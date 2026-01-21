@@ -1,4 +1,4 @@
-// FlashCard2.js - Nova versão sem conflitos
+// FlashCard2.js - CORRIGIDO (com navegação funcionando)
 import React from 'react';
 import { 
   TouchableOpacity, 
@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 
 export const FlashCard2 = ({ 
   imageUri, 
-  target = 'ArtistFlashDetail', 
+  target = 'FlashDetail', 
   flashData,
   artistId,
   artistName,
@@ -29,23 +29,31 @@ export const FlashCard2 = ({
   };
 
   const handlePress = () => {
-    // Se tiver onPress personalizado, usa ele
-    // Se tiver dados do artista, navega para a tela detalhada
+    // 1. Se tiver onPress personalizado, usa ele
+    if (onPress) {
+      onPress();
+      return;
+    }
+    
     if (flashData && artistId && artistName) {
-      navigation.navigate('ArtistFlashDetail', {
-        flashData,
-        artistId,
-        artistName
+      navigation.navigate('FlashDetail', {
+        flashData: flashData,           // Dados completos do flash
+        artistId: artistId,             // ID do artista
+        artistName: artistName          // Nome do artista
       });
     } 
-    // Se não, mantém o comportamento original
-    else {
+    // 3. Se não, mantém o comportamento original (para compatibilidade)
+    else if (flashData) {
       navigation.navigate(target, { 
         flash: flashData || { 
           foto: imageUri,
           ...flashData 
         } 
       });
+    }
+    // 4. Se não tiver dados, mostra alerta (ou faz nada)
+    else {
+      console.warn('FlashCard2: Dados insuficientes para navegação');
     }
   };
 
@@ -61,6 +69,7 @@ export const FlashCard2 = ({
   return (
     <TouchableOpacity 
       style={[styles.flashCard, style]}
+      onPress={handlePress} // ✅ AGORA ESTÁ AQUI!
       activeOpacity={0.7}
     >
       <Image 
@@ -94,7 +103,7 @@ export const FlashCard2 = ({
   );
 };
 
-// Estilos locais para maior flexibilidade
+// Estilos locais (mantidos iguais)
 const styles = StyleSheet.create({
   flashCard: {
     width: 120,
@@ -170,8 +179,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-// Componente wrapper para compatibilidade com o estilo antigo
-export const FlashCardCompatible = (props) => {
-  return <FlashCard2 {...props} />;
-};

@@ -323,9 +323,10 @@ export default function ArtistProfile() {
                   <PortfolioCard2 
                     key={post.id}
                     imageUri={post.foto}
-                    postData={post}
-                    artistId={artistId}
+                    postData={post}           // Dados completos do post/portfólio
+                    artistId={artistId}       // ID do artista
                     artistName={artist.name}
+                    
                   />
                 ))}
               </ScrollView>
@@ -359,12 +360,12 @@ export default function ArtistProfile() {
               >
                 {flashes.slice(0, 3).map((flash) => (
                   <FlashCard2 
-                    key={flash.id}
-                    imageUri={flash.foto}
-                    flashData={flash}
-                    artistId={artistId}
-                    artistName={artist.name}
-                  />    
+                      key={flash.id}
+                      imageUri={flash.foto}
+                      flashData={flash}          // Dados completos do flash
+                      artistId={artistId}        // ID do artista
+                      artistName={artist.name}   // Nome do artista
+                    />
                 ))}
               </ScrollView>
             ) : (

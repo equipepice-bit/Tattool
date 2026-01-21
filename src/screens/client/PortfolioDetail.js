@@ -1,48 +1,113 @@
+// ArtistPortfolioDetail.js - USANDO VIEW NORMAL
 import React from 'react';
-import { View, Text, Image, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import { 
+  View, 
+  Text, 
+  Image, 
+  StatusBar, 
+  TouchableOpacity,
+  Platform 
+} from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { portfolioStyles as styles } from '../../styles/PortfolioStyles';
 import { IMAGES } from '../../constants/images';
 import { BackButton } from '../../components/BackButton';
 import { Tag } from '../../components/Tag';
-import { useTheme } from '../../context/ThemeContext'; // <--- IMPORTAÇÃO
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PortfolioDetail() {
   const route = useRoute();
-  const { imageUri } = route.params || { imageUri: IMAGES.OCTOPUS_BLACKWORK };
+  const navigation = useNavigation();
+  const { postData, artistId, artistName } = route.params || {};
+  
   const { colors, isDark } = useTheme();
 
+  // Usar dados REAIS do portfólio
+  const imageUri = postData?.foto || IMAGES.OCTOPUS_BLACKWORK;
+  const title = postData?.title || 'Trabalho Realizado';
+  const technique = postData?.technique || 'Técnica não informada';
+  const size = postData?.size || 'Tamanho não informado';
+  const tags = postData?.tags || ['Arte Autoral', 'Finalizado'];
+  const description = postData?.descricao || 'Esta peça foi desenvolvida exclusivamente para o cliente com base em referências pessoais.';
+  const date = postData?.createdAt ? new Date(postData.createdAt).toLocaleDateString('pt-BR') : 'Data não informada';
+
+  const handleContact = () => {
+    navigation.navigate('Contact', { 
+      artistId,
+      artistName,
+      portfolioTitle: title,
+      portfolioImage: imageUri
+    });
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={colors.statusBarStyle} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="light-content" backgroundColor="#8B0000" />
       
-      <View style={{ position: 'absolute', left: 20, top: 40, zIndex: 10 }}>
-        <BackButton color="#000" backgroundColor="rgba(255,255,255,0.7)" />
-      </View>
+      {/* Espaço para status bar do iOS */}
+      {Platform.OS === 'ios' && <View style={{ height: 44 }} />}
       
-      <Text style={[styles.mainTitle, { color: colors.text }]}>Trabalho Realizado</Text>
-
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: imageUri }} 
-          style={styles.image} 
-          resizeMode="cover"
-        />
-      </View>
-
-      <View style={[styles.content, { backgroundColor: colors.cardBg }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Tags do Projeto</Text>
-        <View style={styles.tagsRow}>
-          <Tag label="Arte Autoral" />
-          <Tag label="Finalizado" />
-          <Tag label="Blackwork" />
+      {/* Espaço para status bar do Android */}
+      {Platform.OS === 'android' && <View style={{ height: 24 }} />}
+      
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <BackButton backgroundColor="transparent" color={isDark ? colors.text : "#FFF"} />
+          <Text style={[styles.headerTitle, { color: "#FFF" }]}>{title}</Text>
         </View>
-        
-        <Text style={[styles.description, { color: colors.subText }]}>
-          Esta peça foi desenvolvida exclusivamente para o cliente com base em referências geométricas.
-        </Text>
+      
       </View>
-    </SafeAreaView>
+
+      {/* Container da imagem - CENTRALIZADA HORIZONTALMENTE */}
+      <View style={styles.imageContainer}>
+        <View style={styles.imageWrapper}>
+          <Image 
+            source={{ uri: imageUri }} 
+            style={styles.portfolioImage} 
+            resizeMode="contain" 
+          />
+        </View>
+      </View>
+
+      {artistName && (
+        <View style={styles.artistInfo}>
+          <Text style={[styles.artistText, { color: colors.text }]}>
+            Trabalho realizado por: {artistName}
+          </Text>
+        </View>
+      )}
+
+      <View style={[styles.infoSection, { backgroundColor: colors.cardBg }]}>
+        <Text style={[styles.infoTitle, { color: colors.text }]}>Detalhes do Trabalho</Text>
+        
+        <View style={styles.detailsRow}>
+          <View style={styles.detailsLeft}>
+           
+             
+            <Text style={[styles.detailLabel, { color: colors.subText, marginTop: 10 }]}>Data:</Text>
+            <Text style={[styles.date, { color: colors.text }]}>{date}</Text>
+          </View>
+
+          <View style={styles.detailsRight}>
+            {/* Tags reais do portfólio */}
+            {tags && tags.length > 0 ? (
+              tags.map((tag, index) => (
+                <Tag key={index} label={tag} />
+              ))
+            ) : (
+              <Text style={[styles.noTagsText, { color: colors.subText }]}>
+                Nenhuma tag
+              </Text>
+            )}
+          </View>
+        </View>
+
+        <Text style={[styles.description, { color: colors.subText }]}>
+          {description}
+        </Text>
+
+      </View>
+    </View>
   );
 }

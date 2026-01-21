@@ -220,48 +220,67 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
-    if (!user.name.trim() || !user.email.trim()) {
-      Alert.alert('Erro', 'Nome e e-mail são obrigatórios');
-      return;
-    }
+  if (!user.name.trim() || !user.email.trim()) {
+    Alert.alert('Erro', 'Nome e e-mail são obrigatórios');
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
+    
+    // Atualizar no Firebase
+    if (user.userId) {
+      const userRef = dbRef(db, `users/${user.userId}`);
       
-      // Atualizar no Firebase
-      if (user.userId) {
-        const userRef = dbRef(db, `users/${user.userId}`);
-        
-        const updates = {
-          name: user.name,
-          email: user.email,
-          telefone: user.telefone || '',
-          endereco: user.endereco || '',
-          updatedAt: new Date().toISOString(),
-        };
-        
-        await update(userRef, updates);
-      }
+      const updates = {
+        name: user.name,
+        email: user.email,
+        telefone: user.telefone || '',
+        endereco: user.endereco || '',
+        updatedAt: new Date().toISOString(),
+      };
       
-      // Atualizar AsyncStorage
-      await saveUserData(user);
-      
-      // Atualizar contexto
-      if (updateUserData) {
-        await updateUserData(user);
-      }
-      
-      Alert.alert('✅ Sucesso', 'Dados atualizados com sucesso!');
-      setDropdownOpen(false);
-      setIsEditing(false);
-      
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      Alert.alert('❌ Erro', 'Não foi possível salvar as alterações');
-    } finally {
-      setLoading(false);
+      await update(userRef, updates);
     }
-  };
+    
+    // 🔥 ATUALIZAR AsyncStorage COM DADOS COMPLETOS
+    const updatedUser = {
+      uid: user.userId,
+      name: user.name,
+      email: user.email,
+      telefone: user.telefone || '',
+      endereco: user.endereco || '',
+      foto: user.foto || '',
+      role: user.role || '', // Certifique-se de manter o role
+      // Outros campos que você possa ter
+    };
+    
+    await saveUserData(updatedUser);
+    
+    // 🔥 ATUALIZAR O ESTADO LOCAL TAMBÉM
+    setUser(updatedUser);
+    
+    Alert.alert('✅ Sucesso', 'Dados atualizados com sucesso!', [
+      { 
+        text: 'OK', 
+        onPress: () => {
+          setDropdownOpen(false);
+          setIsEditing(false);
+          
+          // 🔥 FORÇAR A HOME A RECARREGAR OS DADOS
+          // Você pode usar um callback ou voltar para Home
+          navigation.navigate('Home');
+        }
+      }
+    ]);
+    
+  } catch (error) {
+    console.error('Erro ao salvar:', error);
+    Alert.alert('❌ Erro', 'Não foi possível salvar as alterações');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     loadUserData();

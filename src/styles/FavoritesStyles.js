@@ -106,5 +106,10 @@ export const favoritesStyles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
     marginLeft: 6,
+  },
+  emptyContainer:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

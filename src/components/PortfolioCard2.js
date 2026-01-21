@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 
 export const PortfolioCard2 = ({ 
   imageUri, 
-  target = 'ArtistPortfolioDetail', 
+  target = 'PortfolioDetail', 
   postData,
   artistId,
   artistName,
@@ -32,10 +32,30 @@ export const PortfolioCard2 = ({
     return tagsToShow.map(tag => `#${tag}`).join(' ');
   };
 
-  const handlePress = () => {
-    
-    // Se tiver dados do artista, navega para a tela 
-  };
+  // PortfolioCard2.js - Função handlePress completa
+const handlePress = () => {
+  // Se tiver dados do post e do artista, navega para a tela de detalhes
+  if (postData && artistId && artistName) {
+    navigation.navigate('PortfolioDetail', {
+      postData: postData,           // Dados completos do post/portfólio
+      artistId: artistId,           // ID do artista
+      artistName: artistName        // Nome do artista
+    });
+  } 
+  // Se não tiver dados do artista, navega apenas com os dados do post
+  else if (postData) {
+    navigation.navigate(target, { 
+      post: postData || { 
+        foto: imageUri,
+        ...postData 
+      } 
+    });
+  }
+  // Se não tiver dados, mostra alerta
+  else {
+    console.warn('PortfolioCard2: Dados insuficientes para navegação');
+  }
+};
 
   // Determina a fonte da imagem
   const imageSource = imageUri || postData?.foto;

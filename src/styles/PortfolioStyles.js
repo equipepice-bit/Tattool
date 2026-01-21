@@ -1,78 +1,159 @@
+// PortfolioStyles.js - ESTILOS IGUAIS AO FLASH
 import { StyleSheet } from 'react-native';
 
 export const portfolioStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F7FB',
+    backgroundColor: '#F5F5F5',
+  },
+  header: {
+    backgroundColor: '#8B0000',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 50,
-    backgroundColor: '#8B0000',
-    padding: 8,
-    borderRadius: 20,
-    zIndex: 10,
-  },
-  mainTitle: {
-    fontSize: 32,
-    fontFamily: 'serif', // Ou a fonte que está a usar nas imagens
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#5D2510',
-    marginTop: 60,
-    marginBottom: 30,
+    marginLeft: 15,
+  },
+  headerIcons: {
+    flexDirection: 'row',
   },
   imageContainer: {
-    width: '90%',
-    height: 380,
-    borderRadius: 30,
-    borderWidth: 4,
-    borderColor: '#3498db', // Borda azul como na imagem
-    overflow: 'hidden',
+    alignItems: 'center', // Centraliza horizontalmente
+    backgroundColor: '#FFF',
+    paddingVertical: 20,
+    marginTop: 10,
+  },
+  imageWrapper: {
+    backgroundColor: '#FFF',
+    padding: 10,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#8B0000',
     elevation: 5,
     shadowColor: '#000',
     shadowOpacity: 0.2,
-    shadowRadius: 10,
+    shadowRadius: 5,
+    alignItems: 'center', // Centraliza a imagem dentro do wrapper
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+  flashImage: {
+    width: 300, // Largura fixa
+    height: 300, // Altura fixa
+    borderRadius: 8,
+    alignSelf: 'center', // Garante centralização horizontal
   },
-  content: {
-    width: '90%',
-    marginTop: 30,
-    alignItems: 'center',
+  artistInfo: {
+    backgroundColor: '#FFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
   },
-  sectionTitle: {
+  artistText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  infoSection: {
+    paddingHorizontal: 30,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  infoTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#4A148C',
-    marginBottom: 10,
-    marginTop: 15,
-  },
-  description: {
-    textAlign: 'center',
     color: '#333',
-    fontSize: 16,
-    lineHeight: 24,
-    paddingHorizontal: 10,
+    marginBottom: 20,
   },
-  tagsRow: {
+  detailsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 15,
+    justifyContent: 'space-between',
+  },
+  detailsLeft: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 16,
+    color: '#444',
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B0000',
+    marginTop: 5,
+  },
+  detailsRight: {
+    alignItems: 'flex-end',
   },
   tag: {
     borderWidth: 1.5,
     borderColor: '#4A148C',
     borderRadius: 20,
-    paddingHorizontal: 25,
-    paddingVertical: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    marginBottom: 10,
+    minWidth: 100,
+    alignItems: 'center',
   },
   tagText: {
     color: '#4A148C',
+    fontSize: 14,
     fontWeight: '600',
-  }
+  },
+  description: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+    marginTop: 20,
+    marginBottom: 25,
+  },
+  actionButton: {
+    backgroundColor: '#8B0000',
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  actionButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // Novos estilos específicos para portfólio
+  portfolioImage: {
+    width: 300,
+    height: 300,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  technique: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B0000',
+    marginTop: 5,
+  },
+  date: {
+    fontSize: 16,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 5,
+  },
 });

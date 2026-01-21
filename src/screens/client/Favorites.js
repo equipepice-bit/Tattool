@@ -99,40 +99,28 @@ export default function Favorites() {
         style: 'destructive',
         onPress: async () => {
           try {
-            // Método simples: recarrega tudo do Firebase
-            const userRef = ref(database, `users/${user.uid}`);
-            const userSnap = await get(userRef);
+            // 🔥 USE O MESMO SERVIÇO QUE A HOME USA
+            await RTDBService.removeFromFavorites(user.uid, artistId);
             
-            if (userSnap.exists()) {
-              const userData = userSnap.val();
-              let favoritesArray = userData.favoritos || [];
-              
-              // Remove o ID
-              const index = favoritesArray.indexOf(artistId);
-              if (index > -1) {
-                favoritesArray.splice(index, 1);
-              }
-              
-              // Salva no Firebase
-              await update(userRef, { favoritos: favoritesArray });
-              
-              // Recarrega os favoritos do Firebase
-              setTimeout(async () => {
-                const updatedFavorites = await RTDBService.getUserFavorites(user.uid);
-                setFavorites(updatedFavorites);
-              }, 300);
-              
-              Alert.alert('Sucesso', 'Artista removido dos favoritos');
-            }
+            // Atualize o estado local REMOVENDO o artista
+            setFavorites(prevFavorites => 
+              prevFavorites.filter(artist => 
+                (artist.uid || artist.id) !== artistId
+              )
+            );
+            
+            Alert.alert('Sucesso', 'Artista removido dos favoritos');
+            
           } catch (error) {
-            console.error('Erro:', error);
-            Alert.alert('Erro', 'Não foi possível remover');
+            console.error('Erro ao remover favorito:', error);
+            Alert.alert('Erro', 'Não foi possível remover o artista dos favoritos');
           }
         }
       }
     ]
   );
 };
+
   const handleRequestBudget = (artist) => {
     if (!user) {
       Alert.alert(
